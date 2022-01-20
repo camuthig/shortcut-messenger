@@ -16,6 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from messenger.views.shortcut import shortcut_events
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("shortcut/events", shortcut_events, name="shortcut-events"),
 ]
