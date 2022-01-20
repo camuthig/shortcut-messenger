@@ -1,9 +1,13 @@
+import hashlib
+import hmac
 import json
 import logging
 
 from django.http import HttpRequest
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
+from core import env
 
 
 logger = logging.getLogger(__name__)
@@ -62,8 +66,32 @@ def _handle_uat_not_approved(action: dict, uat_not_approved_label: dict | None):
         logger.debug("UAT was not approved.")
 
 
+def _check_signature(request: HttpRequest) -> JsonResponse | None:
+    shortcut_secret = str(env.get("SHORTCUT_SECRET"))
+    signature = str(request.headers.get("Payload-Signature"))
+    if not shortcut_secret and not signature:
+        return None
+    elif shortcut_secret and not signature:
+        logger.warning("The application has configured a Shortcut secret, but Shortcut is not sending a signature")
+    elif not shortcut_secret and signature:
+        logger.warning("The application has not configured a Shortcut secret, but Shortcut is sending a signature")
+
+    computed_signature = hmac.new(bytes(shortcut_secret, "utf-8"), request.body, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(computed_signature, signature):
+        response = JsonResponse({})
+        response.status_code = 401
+        return response
+
+    return None
+
+
 @csrf_exempt
 def shortcut_events(request: HttpRequest, *args, **kwargs):
+    error_response = _check_signature(request)
+    if error_response is not None:
+        return error_response
+
     logger.debug("Shortcut hook received: " + request.body.decode("utf-8"))
 
     data = json.loads(request.body)
