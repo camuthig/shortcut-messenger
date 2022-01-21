@@ -10,6 +10,15 @@ def get(key: str) -> Any | None:
     return environ.get(key)
 
 
+def get_str(key: str) -> str | None:
+    val = environ.get(key)
+
+    if val is None:
+        return None
+
+    return str(val)
+
+
 def get_bool(key: str) -> bool | None:
     val = environ.get(key)
 

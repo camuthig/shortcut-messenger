@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from core import env
+from messenger import slack
 
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,10 @@ def _handle_needs_testing(action: dict, needs_testing_state: dict | None):
 
     if workflow_change["new"] == needs_testing_state["id"]:
         logger.debug("Ready for testing!")
-    else:
-        logger.debug("Not ready for testing.")
+        slack.app.client.chat_postMessage(
+            channel="shortcut-needs-testing",
+            text=f"SC-{action['id']} has been moved to Needs Testing.\n<{action['app_url']}|{action['name']}>",
+        )
 
 
 def _handle_uat_not_approved(action: dict, uat_not_approved_label: dict | None):
@@ -64,6 +67,10 @@ def _handle_uat_not_approved(action: dict, uat_not_approved_label: dict | None):
 
     if uat_not_approved_label["id"] in added_labels:
         logger.debug("UAT was not approved.")
+        slack.app.client.chat_postMessage(
+            channel="shortcut-uat-not-approved",
+            text=f"SC-{action['id']} has been marked UAT: Not Approved.\n<{action['app_url']}|{action['name']}>",
+        )
 
 
 def _check_signature(request: HttpRequest) -> JsonResponse | None:
