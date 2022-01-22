@@ -1,3 +1,4 @@
+import json
 from os import environ
 from typing import Any
 
@@ -31,3 +32,20 @@ def get_bool(key: str) -> bool | None:
         return True
 
     raise ValueError(f"The key value for {key} must be eiter true or false")
+
+
+def get_list(key: str) -> list | None:
+    val = environ.get(key)
+
+    if val is None:
+        return None
+
+    try:
+        val = json.loads(val)
+
+        if not isinstance(val, list):
+            raise ValueError(f'Value "{val}" is not a list.')
+
+        return val
+    except Exception:
+        raise ValueError(f'Unable to parse "{val}" as a list.')
