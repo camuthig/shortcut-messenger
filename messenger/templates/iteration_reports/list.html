@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block body %}
+
+<a href="{% url 'iteration-reports-create' %}">New</a>
+
+<div>
+    {% for report in object_list %}
+    <div>
+        <div>{{ report.iteration_name }}</div>
+        <div>Generated at: {{ report.created_at|localtime }} - <a
+                href="{% url 'iteration-reports-show' report.id %}">Report</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

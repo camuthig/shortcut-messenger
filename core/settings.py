@@ -31,6 +31,8 @@ DEBUG = env.get_bool("DEBUG")
 
 ALLOWED_HOSTS = env.get_list("ALLOWED_HOSTS") or []
 
+INTERNAL_IPS = ["127.0.0.1"]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "tailwind",
+    "theme",
     "messenger",
 ]
 
@@ -150,3 +154,6 @@ if DEBUG:
             "propogate": True,
         },
     }
+
+
+TAILWIND_APP_NAME = "theme"

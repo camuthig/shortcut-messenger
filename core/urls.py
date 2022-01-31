@@ -14,11 +14,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.urls import include
 from django.urls import path
 
 from messenger.views.shortcut import shortcut_events
+from messenger.views import reports
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("shortcut/events", shortcut_events, name="shortcut-events"),
+    path(
+        "iterationReports/",
+        include(
+            [
+                path("", reports.IterationReportListView.as_view(), name="iteration-reports-list"),
+                path("new", reports.IterationReportCreateView.as_view(), name="iteration-reports-create"),
+                path("<int:pk>", reports.IterationReportView.as_view(), name="iteration-reports-show"),
+            ]
+        ),
+    ),
 ]

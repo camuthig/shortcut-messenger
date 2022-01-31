@@ -4,6 +4,7 @@ from django.utils import dateparse
 
 from core import env
 from messenger.shortcut import ShortcutClient
+from messenger.models import IterationReport
 
 
 class IterationNotFound(Exception):
@@ -102,7 +103,7 @@ def _filter_added_after_start(
 
 def _filter_stories_by_team(stories: list[dict]) -> dict[str, list[str]]:
     breakdown: dict[str, list[str]] = {
-        "enterprise": [],
+        "ent": [],
         "smb": [],
         "other": [],
     }
@@ -111,7 +112,7 @@ def _filter_stories_by_team(stories: list[dict]) -> dict[str, list[str]]:
         notable_labels = [label["name"] for label in story["labels"] if label["name"] in ("CS - ENT", "CS - SMB")]
         if notable_labels:
             if "CS - ENT" in notable_labels:
-                breakdown["enterprise"].append(story["id"])
+                breakdown["ent"].append(story["id"])
             if "CS - SMB" in notable_labels:
                 breakdown["smb"].append(story["id"])
         else:
@@ -159,6 +160,27 @@ def get_iteration_report(name: str):
     stories = c.get_stories(story_ids, with_history=True)
 
     labels = c.get_labels()
+
+    return build_iteration_report_data(
+        IterationReport(
+            iteration_name=name,
+            iteration_data={
+                "stories": stories,
+                "iteration": iteration,
+                "labels": labels,
+            },
+        )
+    )
+
+
+def build_iteration_report_data(iteration_report: IterationReport):
+    stories = iteration_report.iteration_data["stories"]
+    iteration = iteration_report.iteration_data["iteration"]
+    labels = iteration_report.iteration_data["labels"]
+
+    start_date = dateparse.parse_datetime(iteration["start_date"])
+    if start_date is None:
+        raise RuntimeError("Unable to parse iteration start_date")
 
     high_comment_stories = _filter_high_comment_stories(stories)
     high_uat_stories = _filter_high_uat_stories(labels, stories)
