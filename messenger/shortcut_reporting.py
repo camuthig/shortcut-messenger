@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 
 from django.utils import dateparse
 
@@ -76,6 +77,8 @@ def _filter_added_after_start(
     start_date: datetime,
     iteration_id: str,
 ) -> dict[str, str]:
+    # Add a day and a half to give the team some leeway and deal time timezones (all dates are in UTC)
+    start_date = start_date + timedelta(hours=36)
     matching_stories = {}
     for story in stories:
         matched = False
