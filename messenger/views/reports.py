@@ -20,6 +20,15 @@ class IterationReportListView(ListView):
     template_name = "iteration_reports/list.html"
     model = models.IterationReport
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(iteration_name__icontains=q)
+
+        return qs
+
 
 class IterationReportCreateView(CreateView):
     class CreateForm(forms.ModelForm):

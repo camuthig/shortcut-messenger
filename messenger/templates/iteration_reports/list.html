@@ -3,17 +3,22 @@
 
 {% block body %}
 
-<a href="{% url 'iteration-reports-create' %}">New</a>
-
-<div>
-    {% for report in object_list %}
+    <a href="{% url 'iteration-reports-create' %}">New</a>
     <div>
-        <div>{{ report.iteration_name }}</div>
-        <div>Generated at: {{ report.created_at|localtime }} - <a
-                href="{% url 'iteration-reports-show' report.id %}">Report</a>
-        </div>
+        <form method="get">
+            <input name="q" placeholder="Search">
+            <input type="submit" value="Search">
+        </form>
     </div>
-    {% endfor %}
-</div>
+    <div>
+        {% for report in object_list %}
+            <div>
+                <div>{{ report.iteration_name }}</div>
+                <div>Generated at: {{ report.created_at|localtime }} - <a
+                        href="{% url 'iteration-reports-show' report.id %}">Report</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 
 {% endblock %}
