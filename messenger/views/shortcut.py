@@ -14,12 +14,24 @@ from messenger import slack
 logger = logging.getLogger(__name__)
 
 
-def _get_testing_state_ref(references: list[dict]) -> dict | None:
+def _get_state_ref(state: str, references: list[dict]) -> dict | None:
     for reference in references:
-        if reference.get("entity_type") == "workflow-state" and reference.get("name") == "Needs Testing":
+        if reference.get("entity_type") == "workflow-state" and reference.get("name") == state:
             return reference
 
     return None
+
+
+def _get_testing_state_ref(references: list[dict]) -> dict | None:
+    return _get_state_ref("Needs Testing", references)
+
+
+def _get_done_state_ref(references: list[dict]) -> dict | None:
+    return _get_state_ref("Done", references)
+
+
+def _get_released_state_ref(references: list[dict]) -> dict | None:
+    return _get_state_ref("Released to Prod", references)
 
 
 def _get_uat_not_approved_ref(references: list[dict]) -> dict | None:
@@ -28,6 +40,29 @@ def _get_uat_not_approved_ref(references: list[dict]) -> dict | None:
             return reference
 
     return None
+
+
+def _handle_done(action, done_state: dict, released_state: dict):
+    if action.get("entity_type") != "story":
+        return
+
+    if "workflow_state_id" not in action.get("changes", {}):
+        return
+
+    workflow_change = action["changes"]["workflow_state_id"]
+
+    if done_state and workflow_change["new"] == done_state["id"]:
+        logger.debug("Ticket is done!")
+        slack.app.client.chat_postMessage(
+            channel="shortcut-completed",
+            text=f"SC-{action['id']} has been marked as done.\n<{action['app_url']}|{action['name']}>",
+        )
+    elif released_state and workflow_change["new"] == released_state["id"]:
+        logger.debug("Ticket is released!")
+        slack.app.client.chat_postMessage(
+            channel="shortcut-completed",
+            text=f"SC-{action['id']} has been released.\n<{action['app_url']}|{action['name']}>",
+        )
 
 
 def _handle_needs_testing(action: dict, needs_testing_state: dict | None):
@@ -114,5 +149,6 @@ def shortcut_events(request: HttpRequest, *args, **kwargs):
     for action in actions:
         _handle_needs_testing(action, needs_testing_state)
         _handle_uat_not_approved(action, uat_not_approved_label)
+        _handle_done(action, _get_done_state_ref(references), _get_released_state_ref(references))
 
     return JsonResponse({})
